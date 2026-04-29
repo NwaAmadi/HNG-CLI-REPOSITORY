@@ -1,0 +1,4 @@
+id,name,age,age_group,gender,gender_probability,country_id,country_name,country_probability,created_at
+019dab38-9115-7142-863d-1ad0b6328baa,kwame ng teen,18,teenager,male,0.98,NG,Nigeria,0.93,Mon Apr 20 2026 14:08:24 GMT+0000 (Coordinated Universal Time)
+019dab38-9115-7142-863d-1eabddce7185,leo ng young,22,adult,male,0.96,NG,Nigeria,0.93,Mon Apr 20 2026 14:08:24 GMT+0000 (Coordinated Universal Time)
+019dab38-9115-7142-863d-2596e12ef2ee,david ng leader,41,adult,male,0.98,NG,Nigeria,0.96,Mon Apr 20 2026 14:08:24 GMT+0000 (Coordinated Universal Time)

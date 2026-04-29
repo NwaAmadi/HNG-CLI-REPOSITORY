@@ -2,6 +2,7 @@ import type { Command } from "commander";
 
 import { getApiClient } from "../services/api-client.js";
 import { loginWithBrowserFlow, logoutUser } from "../services/auth-service.js";
+import { withLoader } from "../utils/loading.js";
 import { printJson } from "../utils/output.js";
 
 export const buildAuthCommands = (program: Command) => {
@@ -16,17 +17,21 @@ export const buildAuthCommands = (program: Command) => {
     .command("logout")
     .description("Clear local credentials and invalidate the refresh token")
     .action(async () => {
-      await logoutUser();
-      console.log("Logged out successfully");
+      await withLoader(() => logoutUser(), {
+        start: "Logging out...",
+        success: "Logged out successfully",
+      });
     });
 
   program
     .command("whoami")
     .description("Show the current authenticated user")
     .action(async () => {
-      console.log("Fetching current user...");
       const client = getApiClient();
-      const user = await client.getCurrentUser();
+      const user = await withLoader(() => client.getCurrentUser(), {
+        start: "Fetching current user...",
+        success: "Current user loaded",
+      });
       const username =
         user.username ?? user.login ?? user.handle ?? user.email ?? user.id;
 

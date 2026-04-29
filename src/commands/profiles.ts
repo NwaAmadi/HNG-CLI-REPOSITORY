@@ -5,6 +5,7 @@ import { Command } from "commander";
 
 import { getApiClient } from "../services/api-client.js";
 import { ApiError } from "../utils/errors.js";
+import { withLoader } from "../utils/loading.js";
 import { printTable } from "../utils/table.js";
 
 type ProfileListOptions = {
@@ -17,6 +18,10 @@ type ProfileListOptions = {
   order?: string;
   page?: number;
   limit?: number;
+};
+
+type ProfileExportOptions = ProfileListOptions & {
+  format: string;
 };
 
 export const buildProfilesCommands = (program: Command) => {
@@ -35,9 +40,11 @@ export const buildProfilesCommands = (program: Command) => {
     .option("--page <page>", "Page number", parseInteger)
     .option("--limit <limit>", "Page size", parseInteger)
     .action(async (options: ProfileListOptions) => {
-      console.log("Fetching profiles...");
       const client = getApiClient();
-      const result = await client.listProfiles(options);
+      const result = await withLoader(() => client.listProfiles(options), {
+        start: "Fetching profiles...",
+        success: (response) => `Loaded ${response.items.length} profile(s)`,
+      });
       printProfileTable(result.items);
     });
 
@@ -46,9 +53,11 @@ export const buildProfilesCommands = (program: Command) => {
     .description("Get a single profile by ID")
     .argument("<id>", "Profile ID")
     .action(async (id: string) => {
-      console.log("Fetching profile...");
       const client = getApiClient();
-      const profile = await client.getProfile(id);
+      const profile = await withLoader(() => client.getProfile(id), {
+        start: `Fetching profile ${id}...`,
+        success: "Profile loaded",
+      });
       printProfileTable([profile]);
     });
 
@@ -57,9 +66,11 @@ export const buildProfilesCommands = (program: Command) => {
     .description("Search profiles in natural language")
     .argument("<query>", "Search query")
     .action(async (query: string) => {
-      console.log("Searching profiles...");
       const client = getApiClient();
-      const result = await client.searchProfiles(query);
+      const result = await withLoader(() => client.searchProfiles(query), {
+        start: "Searching profiles...",
+        success: (response) => `Found ${response.items.length} profile(s)`,
+      });
       printProfileTable(result.items);
     });
 
@@ -71,12 +82,13 @@ export const buildProfilesCommands = (program: Command) => {
     .option("--gender <gender>", "Profile gender")
     .option("--country <country>", "Profile country")
     .action(async (options: Record<string, string | number | undefined>) => {
-      console.log("Creating profile...");
       const client = getApiClient();
 
       try {
-        const created = await client.createProfile(options);
-        console.log("Profile created successfully");
+        const created = await withLoader(() => client.createProfile(options), {
+          start: "Creating profile...",
+          success: "Profile created successfully",
+        });
         printProfileTable([created]);
       } catch (error) {
         if (error instanceof ApiError && error.status === 403) {
@@ -91,15 +103,26 @@ export const buildProfilesCommands = (program: Command) => {
     .command("export")
     .description("Export profiles to the current directory")
     .option("--format <format>", "Export format", "csv")
-    .action(async (options: { format: string }) => {
-      console.log("Exporting profiles...");
+    .option("--gender <gender>", "Filter by gender")
+    .option("--country <country>", "Filter by country")
+    .option("--age-group <ageGroup>", "Filter by age group")
+    .option("--min-age <minAge>", "Minimum age", parseInteger)
+    .option("--max-age <maxAge>", "Maximum age", parseInteger)
+    .option("--sort-by <sortBy>", "Sort field")
+    .option("--order <order>", "Sort order")
+    .option("--page <page>", "Page number", parseInteger)
+    .option("--limit <limit>", "Page size", parseInteger)
+    .action(async (options: ProfileExportOptions) => {
       const client = getApiClient();
 
       if (options.format !== "csv") {
         throw new Error(`Unsupported export format: ${options.format}`);
       }
 
-      const rows = await client.exportProfiles(options.format);
+      const rows = await withLoader(() => client.exportProfiles(options), {
+        start: "Exporting profiles...",
+        success: "Profiles exported",
+      });
       const filename = `profiles_${new Date().toISOString().slice(0, 10)}.csv`;
       const filePath = path.join(process.cwd(), filename);
 
@@ -127,13 +150,52 @@ const printProfileTable = (profiles: Array<Record<string, unknown>>) => {
   }
 
   printTable(
-    profiles.map((profile) => ({
-      ID: stringifyCell(profile.id),
-      Name: stringifyCell(profile.name ?? profile.fullName ?? profile.displayName),
-      Age: stringifyCell(profile.age),
-      Gender: stringifyCell(profile.gender),
-      Country: stringifyCell(profile.country ?? profile.countryName),
-    })),
+    profiles.map((profile) => {
+      const record = unwrapProfile(profile);
+
+      return {
+        ID: stringifyCell(record.id),
+        Name: stringifyCell(record.name ?? record.fullName ?? record.displayName),
+        Age: stringifyCell(record.age),
+        Gender: stringifyCell(record.gender),
+        Country: stringifyCell(readCountry(record)),
+      };
+    }),
+  );
+};
+
+const unwrapProfile = (profile: Record<string, unknown>) => {
+  const candidate =
+    profile.data ??
+    profile.profile ??
+    profile.item ??
+    profile.result;
+
+  if (candidate && typeof candidate === "object" && !Array.isArray(candidate)) {
+    return candidate as Record<string, unknown>;
+  }
+
+  return profile;
+};
+
+const readCountry = (profile: Record<string, unknown>) => {
+  const location =
+    profile.location && typeof profile.location === "object" && !Array.isArray(profile.location)
+      ? (profile.location as Record<string, unknown>)
+      : undefined;
+
+  return (
+    profile.country ??
+    profile.countryName ??
+    profile.country_name ??
+    profile.countryCode ??
+    profile.country_code ??
+    profile.nationality ??
+    location?.country ??
+    location?.countryName ??
+    location?.country_name ??
+    location?.countryCode ??
+    location?.country_code
   );
 };
 

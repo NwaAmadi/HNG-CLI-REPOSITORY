@@ -66,12 +66,15 @@ const loadDotEnvFile = () => {
 loadDotEnvFile();
 
 const envSchema = {
-  INSIGHTA_API_BASE_URL: z.string().url(),
-  INSIGHTA_AUTH_START_PATH: z.string().startsWith("/"),
+  INSIGHTA_API_BASE_URL: z
+    .string()
+    .url()
+    .default("https://hng-14-backend-gospel.vercel.app"),
+  INSIGHTA_AUTH_START_PATH: z.string().startsWith("/").default("/api/auth/github"),
   INSIGHTA_AUTH_EXCHANGE_PATH: z.string().startsWith("/").default("/api/auth/cli/exchange"),
   INSIGHTA_AUTH_REFRESH_PATH: z.string().startsWith("/").default("/api/auth/refresh"),
   INSIGHTA_AUTH_LOGOUT_PATH: z.string().startsWith("/").default("/api/auth/logout"),
-  INSIGHTA_ME_PATH: z.string().startsWith("/").default("/me"),
+  INSIGHTA_ME_PATH: z.string().startsWith("/").default("/api/auth/me"),
   INSIGHTA_PROFILES_PATH: z.string().startsWith("/").default("/api/profiles"),
   INSIGHTA_PROFILES_SEARCH_PATH: z
     .string()
@@ -81,12 +84,13 @@ const envSchema = {
     .string()
     .startsWith("/")
     .default("/api/profiles/export"),
-  INSIGHTA_API_VERSION: z.coerce.number().int().positive(),
-  INSIGHTA_CALLBACK_HOST: z.string().min(1),
-  INSIGHTA_CALLBACK_PORT: z.coerce.number().int().min(1024).max(65535),
+  INSIGHTA_API_VERSION: z.coerce.number().int().positive().default(1),
+  INSIGHTA_CALLBACK_HOST: z.string().min(1).default("127.0.0.1"),
+  INSIGHTA_CALLBACK_PORT: z.coerce.number().int().min(1024).max(65535).default(8787),
   INSIGHTA_CREDENTIALS_FILE: z
     .string()
     .min(1)
+    .default("~/.insighta/credentials.json")
     .transform(expandHomeDirectory),
 };
 

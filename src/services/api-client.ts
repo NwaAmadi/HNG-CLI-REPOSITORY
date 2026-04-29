@@ -54,11 +54,10 @@ class ApiClient {
     const env = getEnv();
     return this.extractProfiles(
       await this.requestJson(env.INSIGHTA_PROFILES_SEARCH_PATH, {
-        method: "POST",
         apiVersion: true,
-        body: {
-          query,
+        query: {
           q: query,
+          query,
         },
       }),
     );
@@ -73,10 +72,13 @@ class ApiClient {
     });
   }
 
-  async exportProfiles(format: string) {
+  async exportProfiles(query: Record<string, string | number | undefined>) {
     const env = getEnv();
     return this.requestText(env.INSIGHTA_PROFILES_EXPORT_PATH, {
-      query: { format },
+      query: {
+        format: query.format,
+        ...mapProfileQuery(query),
+      },
       apiVersion: true,
     });
   }
@@ -269,7 +271,7 @@ export const getApiClient = () => new ApiClient();
 
 const mapProfileQuery = (query: Record<string, string | number | undefined>) => ({
   gender: query.gender,
-  country: query.country,
+  country_id: query.country,
   age_group: query.ageGroup,
   min_age: query.minAge,
   max_age: query.maxAge,

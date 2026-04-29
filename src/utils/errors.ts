@@ -17,6 +17,14 @@ export class AuthRequiredError extends Error {
 }
 
 export const formatCliError = (error: unknown) => {
+  if (error instanceof ApiError) {
+    return `Error: ${error.message}`;
+  }
+
+  if (error instanceof AuthRequiredError) {
+    return `Error: ${error.message}`;
+  }
+
   if (error instanceof Error) {
     return `Error: ${error.message}`;
   }
