@@ -4,22 +4,23 @@ export const normalizeTokenPayload = (
   payload: Record<string, unknown>,
   fallbackUser?: Record<string, unknown>,
 ): StoredCredentials => {
+  const source = unwrapTokenPayload(payload);
   const accessToken = getString(
-    payload.accessToken,
-    payload.access_token,
-    payload.token,
+    source.accessToken,
+    source.access_token,
+    source.token,
   );
   const refreshToken = getString(
-    payload.refreshToken,
-    payload.refresh_token,
+    source.refreshToken,
+    source.refresh_token,
   );
 
   if (!accessToken || !refreshToken) {
     throw new Error("Backend did not return both access and refresh tokens");
   }
 
-  const expiresAt = resolveExpiresAt(payload);
-  const user = readUser(payload) ?? fallbackUser;
+  const expiresAt = resolveExpiresAt(source);
+  const user = readUser(source) ?? fallbackUser;
 
   return {
     accessToken,
@@ -27,6 +28,15 @@ export const normalizeTokenPayload = (
     expiresAt,
     user,
   };
+};
+
+const unwrapTokenPayload = (payload: Record<string, unknown>) => {
+  const candidate = payload.data;
+  if (candidate && typeof candidate === "object" && !Array.isArray(candidate)) {
+    return candidate as Record<string, unknown>;
+  }
+
+  return payload;
 };
 
 const resolveExpiresAt = (payload: Record<string, unknown>) => {
