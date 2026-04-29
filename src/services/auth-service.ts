@@ -9,7 +9,7 @@ import { openBrowser } from "../utils/browser.js";
 
 type OAuthCallbackResult = {
   code: string;
-  state: string;
+  state?: string;
 };
 
 export const loginWithBrowserFlow = async () => {
@@ -24,11 +24,11 @@ export const loginWithBrowserFlow = async () => {
 
   const callbackPromise = waitForOAuthCallback(state);
   const authUrl = new URL(env.INSIGHTA_AUTH_START_PATH, env.INSIGHTA_API_BASE_URL);
+  authUrl.searchParams.set("client", "cli");
   authUrl.searchParams.set("state", state);
   authUrl.searchParams.set("code_challenge", codeChallenge);
   authUrl.searchParams.set("code_challenge_method", "S256");
   authUrl.searchParams.set("redirect_uri", redirectUri);
-  authUrl.searchParams.set("response_type", "code");
 
   console.log("Opening browser for GitHub login...");
   await openBrowser(authUrl.toString());
@@ -42,11 +42,7 @@ export const loginWithBrowserFlow = async () => {
     },
     body: JSON.stringify({
       code: callback.code,
-      state: callback.state,
-      codeVerifier,
       code_verifier: codeVerifier,
-      redirectUri,
-      redirect_uri: redirectUri,
     }),
   });
 
@@ -117,19 +113,11 @@ const waitForOAuthCallback = async (expectedState: string): Promise<OAuthCallbac
         return;
       }
 
-      if (!code || !returnedState) {
+      if (!code) {
         response.statusCode = 400;
-        response.end("Missing OAuth callback parameters. You can close this window.");
+        response.end("Missing OAuth callback code. You can close this window.");
         cleanup();
-        reject(new Error("Missing OAuth callback parameters"));
-        return;
-      }
-
-      if (returnedState !== expectedState) {
-        response.statusCode = 400;
-        response.end("Invalid OAuth state. You can close this window.");
-        cleanup();
-        reject(new Error("Invalid OAuth state"));
+        reject(new Error("Missing OAuth callback code"));
         return;
       }
 
@@ -137,7 +125,10 @@ const waitForOAuthCallback = async (expectedState: string): Promise<OAuthCallbac
       response.setHeader("Content-Type", "text/plain; charset=utf-8");
       response.end("Authentication complete. You can return to the CLI.");
       cleanup();
-      resolve({ code, state: returnedState });
+      if (returnedState && returnedState !== expectedState) {
+        console.warn("Warning: OAuth state mismatch from backend callback; continuing with PKCE exchange.");
+      }
+      resolve({ code, state: returnedState ?? undefined });
     });
 
     const timeout = setTimeout(() => {

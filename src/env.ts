@@ -68,9 +68,9 @@ loadDotEnvFile();
 const envSchema = {
   INSIGHTA_API_BASE_URL: z.string().url(),
   INSIGHTA_AUTH_START_PATH: z.string().startsWith("/"),
-  INSIGHTA_AUTH_EXCHANGE_PATH: z.string().startsWith("/").default("/auth/exchange"),
-  INSIGHTA_AUTH_REFRESH_PATH: z.string().startsWith("/").default("/auth/refresh"),
-  INSIGHTA_AUTH_LOGOUT_PATH: z.string().startsWith("/").default("/auth/logout"),
+  INSIGHTA_AUTH_EXCHANGE_PATH: z.string().startsWith("/").default("/api/auth/cli/exchange"),
+  INSIGHTA_AUTH_REFRESH_PATH: z.string().startsWith("/").default("/api/auth/refresh"),
+  INSIGHTA_AUTH_LOGOUT_PATH: z.string().startsWith("/").default("/api/auth/logout"),
   INSIGHTA_ME_PATH: z.string().startsWith("/").default("/me"),
   INSIGHTA_PROFILES_PATH: z.string().startsWith("/").default("/api/profiles"),
   INSIGHTA_PROFILES_SEARCH_PATH: z
