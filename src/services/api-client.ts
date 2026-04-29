@@ -52,15 +52,32 @@ class ApiClient {
 
   async searchProfiles(query: string) {
     const env = getEnv();
-    return this.extractProfiles(
-      await this.requestJson(env.INSIGHTA_PROFILES_SEARCH_PATH, {
-        apiVersion: true,
-        query: {
-          q: query,
-          query,
-        },
-      }),
-    );
+    try {
+      return this.extractProfiles(
+        await this.requestJson(env.INSIGHTA_PROFILES_SEARCH_PATH, {
+          apiVersion: true,
+          query: {
+            q: query,
+            query,
+          },
+        }),
+      );
+    } catch (error) {
+      if (!(error instanceof ApiError) || ![404, 405].includes(error.status)) {
+        throw error;
+      }
+
+      return this.extractProfiles(
+        await this.requestJson(env.INSIGHTA_PROFILES_SEARCH_PATH, {
+          method: "POST",
+          apiVersion: true,
+          body: {
+            q: query,
+            query,
+          },
+        }),
+      );
+    }
   }
 
   async createProfile(input: Record<string, unknown>) {
@@ -271,6 +288,7 @@ export const getApiClient = () => new ApiClient();
 
 const mapProfileQuery = (query: Record<string, string | number | undefined>) => ({
   gender: query.gender,
+  country: query.country,
   country_id: query.country,
   age_group: query.ageGroup,
   min_age: query.minAge,

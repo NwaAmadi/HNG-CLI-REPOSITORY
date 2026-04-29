@@ -125,8 +125,9 @@ const waitForOAuthCallback = async (expectedState: string): Promise<OAuthCallbac
       response.setHeader("Content-Type", "text/plain; charset=utf-8");
       response.end("Authentication complete. You can return to the CLI.");
       cleanup();
-      if (returnedState && returnedState !== expectedState) {
-        console.warn("Warning: OAuth state mismatch from backend callback; continuing with PKCE exchange.");
+      if (returnedState !== expectedState) {
+        reject(new Error("OAuth state mismatch from backend callback"));
+        return;
       }
       resolve({ code, state: returnedState ?? undefined });
     });
