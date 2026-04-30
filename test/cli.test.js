@@ -294,7 +294,7 @@ async function createMockBackend() {
     const url = new URL(request.url ?? "/", "http://127.0.0.1");
     const pathname = url.pathname;
 
-    if (pathname === "/api/auth/github" && request.method === "GET") {
+    if (pathname === "/auth/github" && request.method === "GET") {
       const redirectUri = url.searchParams.get("redirect_uri");
       const state = url.searchParams.get("state") ?? "backend-state";
       const code = `code-${issuedCodes.size + 1}`;
@@ -306,7 +306,7 @@ async function createMockBackend() {
       return;
     }
 
-    if (pathname === "/api/auth/cli/exchange" && request.method === "POST") {
+    if (pathname === "/auth/cli/exchange" && request.method === "POST") {
       const body = await readJsonBody(request);
       if (!body.code || !body.code_verifier || !issuedCodes.has(body.code)) {
         response.writeHead(401, { "Content-Type": "application/json" });
@@ -320,7 +320,7 @@ async function createMockBackend() {
       return;
     }
 
-    if (pathname === "/api/auth/refresh" && request.method === "POST") {
+    if (pathname === "/auth/refresh" && request.method === "POST") {
       const body = await readJsonBody(request);
       const token = body.refresh_token ?? body.refreshToken;
       if (!issuedRefreshTokens.has(token)) {
@@ -335,7 +335,7 @@ async function createMockBackend() {
       return;
     }
 
-    if (pathname === "/api/auth/logout" && request.method === "POST") {
+    if (pathname === "/auth/logout" && request.method === "POST") {
       response.writeHead(204);
       response.end();
       return;

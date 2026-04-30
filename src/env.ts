@@ -70,10 +70,10 @@ const envSchema = {
     .string()
     .url()
     .default("https://hng-14-backend-gospel.vercel.app"),
-  INSIGHTA_AUTH_START_PATH: z.string().startsWith("/").default("/api/auth/github"),
-  INSIGHTA_AUTH_EXCHANGE_PATH: z.string().startsWith("/").default("/api/auth/cli/exchange"),
-  INSIGHTA_AUTH_REFRESH_PATH: z.string().startsWith("/").default("/api/auth/refresh"),
-  INSIGHTA_AUTH_LOGOUT_PATH: z.string().startsWith("/").default("/api/auth/logout"),
+  INSIGHTA_AUTH_START_PATH: z.string().startsWith("/").default("/auth/github"),
+  INSIGHTA_AUTH_EXCHANGE_PATH: z.string().startsWith("/").default("/auth/cli/exchange"),
+  INSIGHTA_AUTH_REFRESH_PATH: z.string().startsWith("/").default("/auth/refresh"),
+  INSIGHTA_AUTH_LOGOUT_PATH: z.string().startsWith("/").default("/auth/logout"),
   INSIGHTA_ME_PATH: z.string().startsWith("/").default("/api/users/me"),
   INSIGHTA_PROFILES_PATH: z.string().startsWith("/").default("/api/profiles"),
   INSIGHTA_PROFILES_SEARCH_PATH: z
